@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0066ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="uACR">
+  <link rel="apple-touch-icon" href="logo.png">
+  <title>uACR Monitor — Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f7f8fa; --surface: #ffffff; --surface2: #f0f2f5;
+      --border: #e2e6ed; --border-strong: #c8cdd6;
+      --accent: #0066ff; --accent-light: #e8f0ff;
+      --green: #00875a; --green-light: #e3f5ed;
+      --red: #cc2244; --red-light: #ffeef2;
+      --text: #0f1923; --text2: #3d4a5c; --muted: #8a94a6;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(0,102,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,102,255,0.04) 1px, transparent 1px);
+      background-size: 32px 32px; pointer-events: none; z-index: 0;
+    }
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(247,248,250,0.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border); padding: 0 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px; position: relative;
+    }
+    .nav-brand img { height: 36px; width: auto; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-patient { font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--muted); letter-spacing: 0.5px; }
+    .nav-patient span { color: var(--accent); font-weight: 500; }
+    .nav-divider { width: 1px; height: 16px; background: var(--border); }
+    .logout-btn {
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--muted); background: none;
+      border: 1px solid var(--border); border-radius: 4px; padding: 5px 12px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .logout-btn:hover { color: var(--text); border-color: var(--border-strong); }
+    .tab-dropdown { position: relative; }
+    .tab-btn {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--text); background: var(--surface);
+      border: 1px solid var(--border); border-radius: 6px; padding: 6px 14px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .tab-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .tab-menu {
+      display: none; position: absolute; top: calc(100% + 8px); left: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+      min-width: 160px; z-index: 200; overflow: hidden; flex-direction: column;
+    }
+    .tab-menu.open { display: flex; }
+    .tab-item {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--text2); text-decoration: none;
+      padding: 13px 18px; border-bottom: 1px solid var(--border); transition: background 0.15s;
+    }
+    .tab-item:last-child { border-bottom: none; }
+    .tab-item:hover { background: var(--surface2); color: var(--text); }
+    .tab-item.active { color: var(--accent); background: var(--accent-light); }
+    @media (max-width: 768px) {
+      nav { padding: 0 16px; }
+      main { padding: 16px 16px 60px; }
+      .nav-patient { display: none; }
+      .nav-divider { display: none; }
+      .logout-btn { display: none; }
+    }
+    main { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 40px 40px 80px; }
+    .welcome { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border); animation: fadeUp 0.5s ease both; }
+    .welcome-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+    .welcome-title { font-size: 26px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+    .welcome-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 6px; letter-spacing: 0.5px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 28px; margin-bottom: 16px; animation: fadeUp 0.5s ease 0.08s both; }
+    .card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+    .profile-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .profile-row:last-child { border-bottom: none; }
+    .profile-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .profile-value { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--text); }
+    .profile-value.masked { letter-spacing: 3px; }
+    .edit-field { display: none; margin-top: 20px; }
+    .edit-field.show { display: block; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .field input {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; padding: 11px 13px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+      color: var(--text); outline: none; transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .btn-row { display: flex; gap: 10px; margin-top: 6px; }
+    .btn-primary {
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px;
+      text-transform: uppercase; background: var(--accent); color: #fff;
+      border: none; border-radius: 4px; padding: 9px 16px; cursor: pointer; transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary {
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px;
+      text-transform: uppercase; background: none; color: var(--muted);
+      border: 1px solid var(--border); border-radius: 4px; padding: 9px 16px; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-secondary:hover { color: var(--text); border-color: var(--border-strong); }
+    .success-msg { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--green); background: var(--green-light); border: 1px solid #b7e4cf; border-radius: 4px; padding: 8px 12px; margin-top: 12px; display: none; }
+    .success-msg.show { display: block; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand"><img src="logo.png" alt="uACR Monitor Logo"/></div>
+  <div class="nav-right">
+    <div class="tab-dropdown" id="tabDropdown">
+      <button class="tab-btn" onclick="toggleMenu()">Tab ▾</button>
+      <div class="tab-menu" id="tabMenu">
+        <a href="dashboard.html" class="tab-item">Dashboard</a>
+        <a href="profile.html" class="tab-item active">Profile</a>
+        <a href="resources.html" class="tab-item">Resources</a>
+      </div>
+    </div>
+    <div class="nav-patient"><span>BME 4090</span></div>
+    <div class="nav-divider"></div>
+    <button class="logout-btn" onclick="window.location.href='index.html'">Logout</button>
+  </div>
+</nav>
+
+<main>
+  <div class="welcome">
+    <div class="welcome-label">Account</div>
+    <div class="welcome-title">Profile Settings</div>
+    <div class="welcome-sub">Manage your login credentials</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Account Information</div>
+    <div class="profile-row">
+      <div class="profile-label">Patient Name</div>
+      <div class="profile-value">BME 4090</div>
+    </div>
+    <div class="profile-row">
+      <div class="profile-label">Username</div>
+      <div class="profile-value" id="displayUsername">razzypi</div>
+    </div>
+    <div class="profile-row">
+      <div class="profile-label">Password</div>
+      <div class="profile-value masked">••••••••••••</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Change Credentials</div>
+    <div class="field">
+      <label>Current Password</label>
+      <input type="password" id="currentPass" placeholder="Enter current password"/>
+    </div>
+    <div class="field">
+      <label>New Username</label>
+      <input type="text" id="newUsername" placeholder="Leave blank to keep current"/>
+    </div>
+    <div class="field">
+      <label>New Password</label>
+      <input type="password" id="newPass" placeholder="Leave blank to keep current"/>
+    </div>
+    <div class="field">
+      <label>Confirm New Password</label>
+      <input type="password" id="confirmPass" placeholder="Re-enter new password"/>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="saveCredentials()">Save Changes</button>
+      <button class="btn-secondary" onclick="clearFields()">Cancel</button>
+    </div>
+    <div class="success-msg" id="successMsg">Credentials updated successfully.</div>
+  </div>
+</main>
+
+<script>
+  // Load saved credentials or use defaults
+  let credentials = JSON.parse(localStorage.getItem("uacr_credentials") || '{"username":"razzypi","password":"Pa55w0rdr4zzy"}');
+
+  document.getElementById("displayUsername").textContent = credentials.username;
+
+  function saveCredentials() {
+    const currentPass = document.getElementById("currentPass").value;
+    const newUsername = document.getElementById("newUsername").value.trim();
+    const newPass = document.getElementById("newPass").value;
+    const confirmPass = document.getElementById("confirmPass").value;
+
+    if (currentPass !== credentials.password) {
+      alert("Current password is incorrect.");
+      return;
+    }
+    if (newPass && newPass !== confirmPass) {
+      alert("New passwords do not match.");
+      return;
+    }
+    if (newUsername) credentials.username = newUsername;
+    if (newPass) credentials.password = newPass;
+
+    localStorage.setItem("uacr_credentials", JSON.stringify(credentials));
+    document.getElementById("displayUsername").textContent = credentials.username;
+    document.getElementById("successMsg").classList.add("show");
+    clearFields();
+    setTimeout(function() { document.getElementById("successMsg").classList.remove("show"); }, 3000);
+  }
+
+  function clearFields() {
+    ["currentPass","newUsername","newPass","confirmPass"].forEach(function(id) {
+      document.getElementById(id).value = "";
+    });
+  }
+</script>
+<script>
+  function toggleMenu() {
+    document.getElementById('tabMenu').classList.toggle('open');
+  }
+  document.addEventListener('click', function(e) {
+    var dropdown = document.getElementById('tabDropdown');
+    if (!dropdown.contains(e.target)) {
+      document.getElementById('tabMenu').classList.remove('open');
+    }
+  });
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+</body>
+</html>

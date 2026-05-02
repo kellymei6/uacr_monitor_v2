@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0066ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="uACR">
+  <link rel="apple-touch-icon" href="logo.png">
+  <title>uACR Monitor — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface2: #f0f2f5;
+      --border: #e2e6ed;
+      --border-strong: #c8cdd6;
+      --accent: #0066ff;
+      --accent-light: #e8f0ff;
+      --green: #00875a;
+      --green-light: #e3f5ed;
+      --yellow: #b36a00;
+      --yellow-light: #fff4e0;
+      --red: #cc2244;
+      --red-light: #ffeef2;
+      --text: #0f1923;
+      --text2: #3d4a5c;
+      --muted: #8a94a6;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Fine grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,102,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,102,255,0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(247,248,250,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      position: relative;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-brand-mark {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-brand-mark svg {
+      width: 14px; height: 14px;
+      fill: white;
+    }
+
+    .nav-brand-text {
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 500;
+      font-size: 14px;
+      letter-spacing: 2px;
+      color: var(--text);
+    }
+
+    .nav-brand-text span { color: var(--accent); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-center {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .nav-tab {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+
+    .nav-tab:hover { color: var(--text); background: var(--surface2); }
+    .nav-tab.active { color: var(--accent); background: var(--accent-light); }
+
+    .nav-patient {
+      font-size: 11px;
+      font-family: 'IBM Plex Mono', monospace;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+    }
+
+    .nav-patient span { color: var(--accent); font-weight: 500; }
+
+    .nav-divider {
+      width: 1px;
+      height: 16px;
+      background: var(--border);
+    }
+
+    .logout-btn {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .logout-btn:hover { color: var(--text); border-color: var(--border-strong); }
+
+    /* MAIN */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 40px 80px;
+    }
+
+    .welcome {
+      margin-bottom: 36px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .welcome-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .welcome-title {
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    .welcome-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    /* STAT CARDS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+      animation: fadeUp 0.5s ease 0.08s both;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      position: relative;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      border-radius: 0 0 8px 8px;
+    }
+
+    .stat-card.blue::after { background: var(--accent); }
+    .stat-card.purple::after { background: #7c3aed; }
+    .stat-card.green::after { background: var(--green); }
+    .stat-card.yellow::after { background: #d97706; }
+
+    .stat-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .stat-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 30px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .stat-unit {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 6px;
+      letter-spacing: 1px;
+    }
+
+    /* GAUGE */
+    .gauge-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 28px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeUp 0.5s ease 0.12s both;
+    }
+
+    .gauge-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .gauge-circle {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      border: 6px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.4s, box-shadow 0.4s;
+      margin-bottom: 16px;
+    }
+
+    .gauge-circle.normal {
+      border-color: #00875a;
+      box-shadow: 0 0 32px rgba(0,135,90,0.15);
+    }
+
+    .gauge-circle.moderate {
+      border-color: #d97706;
+      box-shadow: 0 0 32px rgba(217,119,6,0.15);
+    }
+
+    .gauge-circle.high {
+      border-color: #cc2244;
+      box-shadow: 0 0 32px rgba(204,34,68,0.15);
+    }
+
+    .gauge-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 36px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .gauge-unit {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    .gauge-status {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .gauge-status.normal { color: #00875a; }
+    .gauge-status.moderate { color: #d97706; }
+    .gauge-status.high { color: #cc2244; }
+
+    /* CHART */
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 28px;
+      margin-bottom: 16px;
+      animation: fadeUp 0.5s ease 0.16s both;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chart-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.1px;
+    }
+
+    .chart-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 3px;
+      letter-spacing: 0.3px;
+    }
+
+    .risk-legend {
+      display: flex;
+      gap: 16px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--muted);
+    }
+
+    .legend-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+    }
+
+    /* READINGS TABLE */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 28px;
+      animation: fadeUp 0.5s ease 0.24s both;
+    }
+
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .add-btn {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .add-btn:hover { opacity: 0.85; }
+
+    .clear-btn {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: none;
+      color: var(--red);
+      border: 1px solid #f0c0c8;
+      border-radius: 4px;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .clear-btn:hover { background: var(--red-light); }
+
+    .delete-row-btn {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.5px;
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .delete-row-btn:hover { color: var(--red); border-color: #f0c0c8; background: var(--red-light); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: left;
+      padding: 0 12px 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-weight: 400;
+    }
+
+    td {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      padding: 13px 12px 13px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text2);
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+
+    .badge {
+      display: inline-block;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 7px;
+      border-radius: 3px;
+      font-weight: 500;
+    }
+
+    .badge.normal { background: var(--green-light); color: var(--green); }
+    .badge.moderate { background: var(--yellow-light); color: var(--yellow); }
+    .badge.high { background: var(--red-light); color: var(--red); }
+
+    .swatch {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 5px;
+      border: 1px solid var(--border);
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,25,35,0.4);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 32px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+      animation: fadeUp 0.25s ease both;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .modal-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.3px;
+      margin-bottom: 24px;
+    }
+
+    .modal-field { margin-bottom: 14px; }
+
+    .modal-field label {
+      display: block;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .modal-field input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 10px 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .modal-field input:focus { border-color: var(--accent); }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .modal-cancel {
+      flex: 1;
+      padding: 10px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-transform: uppercase;
+    }
+
+    .modal-cancel:hover { color: var(--text); border-color: var(--border-strong); }
+
+    .modal-submit {
+      flex: 2;
+      padding: 10px;
+      background: var(--accent);
+      border: none;
+      border-radius: 5px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #fff;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .modal-submit:hover { opacity: 0.85; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* TAB DROPDOWN */
+    .tab-dropdown {
+      position: relative;
+    }
+
+    .tab-btn {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tab-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .tab-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+      min-width: 160px;
+      z-index: 200;
+      overflow: hidden;
+      flex-direction: column;
+    }
+
+    .tab-menu.open { display: flex; }
+
+    .tab-item {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text2);
+      text-decoration: none;
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    .tab-item:last-child { border-bottom: none; }
+    .tab-item:hover { background: var(--surface2); color: var(--text); }
+    .tab-item.active { color: var(--accent); background: var(--accent-light); }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 16px; }
+      main { padding: 16px 16px 60px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .nav-patient { display: none; }
+      .nav-divider { display: none; }
+      .logout-btn { display: none; }
+      .chart-header { flex-direction: column; gap: 12px; }
+      .risk-legend { flex-wrap: wrap; gap: 8px; }
+      .table-header { flex-direction: column; gap: 10px; align-items: flex-start; }
+      th { font-size: 8px; }
+      td { padding: 10px 6px 10px 0; font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <img src="logo.png" alt="uACR Monitor Logo" style="height:36px; width:auto;"/>
+  </div>
+  <div class="nav-right">
+    <!-- Tab dropdown -->
+    <div class="tab-dropdown" id="tabDropdown">
+      <button class="tab-btn" onclick="toggleMenu()">
+        Tab ▾
+      </button>
+      <div class="tab-menu" id="tabMenu">
+        <a href="dashboard.html" class="tab-item active">Dashboard</a>
+        <a href="profile.html" class="tab-item">Profile</a>
+        <a href="resources.html" class="tab-item">Resources</a>
+      </div>
+    </div>
+    <div class="nav-patient"><span>BME 4090</span></div>
+    <div class="nav-divider"></div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<main>
+  <div class="welcome">
+    <div class="welcome-label">Dashboard</div>
+    <div class="welcome-title">Welcome, BME 4090</div>
+    <div class="welcome-sub">Here's your uACR breakdown over time · Auto-refreshes every 10 seconds</div>
+    <div id="serverStatus" style="display:none; margin-top:12px; font-size:11px; color:#ffd166; letter-spacing:1px;"></div>
+  </div>
+
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card blue">
+      <div class="stat-label">Latest Result</div>
+      <div class="stat-value" id="latestUACR">—</div>
+      <div class="stat-unit">Normal / Abnormal</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Total Readings</div>
+      <div class="stat-value" id="totalReadings">0</div>
+      <div class="stat-unit">recorded</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Albumin (Pad 1)</div>
+      <div class="stat-value" id="latestAlbumin">—</div>
+      <div class="stat-unit">latest level</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-label">Creatinine (Pad 2)</div>
+      <div class="stat-value" id="latestCreatinine">—</div>
+      <div class="stat-unit">latest level</div>
+    </div>
+  </div>
+
+  <!-- Latest Reading Gauge -->
+  <div class="gauge-card" id="gaugeCard" style="display:none;">
+    <div class="gauge-label">Latest Reading</div>
+    <div class="gauge-circle" id="gaugeCircle">
+      <div class="gauge-value" id="gaugeValue">—</div>
+      <div class="gauge-unit">Result</div>
+    </div>
+    <div class="gauge-status" id="gaugeStatus"></div>
+    <div id="gaugeDate" style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--muted); margin-top:8px; letter-spacing:1px;"></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Test Results Over Time</div>
+        <div class="chart-sub">Clinistix Kidney Health · Normal / Abnormal</div>
+      </div>
+      <div class="risk-legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#00875a"></div> Normal
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#cc2244"></div> Abnormal
+        </div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <canvas id="uacrChart"></canvas>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Reading History</div>
+      <div style="display:flex; gap:10px;">
+        <button class="clear-btn" onclick="clearAllReadings()">Clear All</button>
+        <button class="add-btn" onclick="openModal()">+ Add Reading</button>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Date / Time</th>
+          <th>Pad 1 RGB (Albumin)</th>
+          <th>Pad 2 RGB (Creatinine)</th>
+          <th>uACR (est.)</th>
+          <th>Risk Level</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="readingsBody">
+        <tr>
+          <td colspan="6" style="color:var(--muted); text-align:center; padding:32px 0; font-size:11px; letter-spacing:1px;">
+            No readings yet. Add your first reading above.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<!-- Add Reading Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">Add New Reading</div>
+    <div class="modal-sub">Enter RGB values from colordetect2.py output</div>
+
+    <div class="modal-field">
+      <label>Pad 1 — Albumin (R value)</label>
+      <input type="number" id="pad1R" placeholder="e.g. 210" min="0" max="255"/>
+    </div>
+    <div class="modal-field">
+      <label>Pad 1 — Albumin (G value)</label>
+      <input type="number" id="pad1G" placeholder="e.g. 180" min="0" max="255"/>
+    </div>
+    <div class="modal-field">
+      <label>Pad 1 — Albumin (B value)</label>
+      <input type="number" id="pad1B" placeholder="e.g. 45" min="0" max="255"/>
+    </div>
+    <div class="modal-field">
+      <label>Pad 2 — Creatinine (R value)</label>
+      <input type="number" id="pad2R" placeholder="e.g. 190" min="0" max="255"/>
+    </div>
+    <div class="modal-field">
+      <label>Pad 2 — Creatinine (G value)</label>
+      <input type="number" id="pad2G" placeholder="e.g. 170" min="0" max="255"/>
+    </div>
+    <div class="modal-field">
+      <label>Pad 2 — Creatinine (B value)</label>
+      <input type="number" id="pad2B" placeholder="e.g. 40" min="0" max="255"/>
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-submit" onclick="addReading()">Save Reading</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Flask API endpoint (Pi must be on same network) ──
+  const API = "https://trophy-hundredth-nacho.ngrok-free.dev";
+  let readings = [];
+
+  // ── Fetch readings from Pi ──
+  async function fetchReadings() {
+    try {
+      const res = await fetch(API + "/readings");
+      if (!res.ok) throw new Error("Server error");
+      readings = await res.json();
+      render();
+    } catch (err) {
+      console.warn("Could not reach Pi server:", err);
+      document.getElementById("serverStatus").textContent = "⚠ Pi server unreachable — make sure server.py is running on the Pi and you are on the same network.";
+      document.getElementById("serverStatus").style.display = "block";
+    }
+  }
+
+  // ── Chart setup ──
+  const ctx = document.getElementById('uacrChart').getContext('2d');
+
+  // Risk zone plugin
+  const riskZonePlugin = {
+    id: 'riskZones',
+    beforeDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      if (!chartArea) return;
+      const yAxis = scales.y;
+
+      const zones = [
+        { min: 0.5, max: 1.2, color: 'rgba(0,135,90,0.05)' },
+        { min: -0.2, max: 0.5, color: 'rgba(204,34,68,0.05)' },
+      ];
+
+      zones.forEach(z => {
+        const yTop = yAxis.getPixelForValue(Math.min(z.max, yAxis.max));
+        const yBot = yAxis.getPixelForValue(Math.max(z.min, yAxis.min));
+        ctx.fillStyle = z.color;
+        ctx.fillRect(chartArea.left, yTop, chartArea.right - chartArea.left, yBot - yTop);
+      });
+    }
+  };
+
+  const chart = new Chart(ctx, {
+    type: 'line',
+    plugins: [riskZonePlugin],
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'uACR (mg/g)',
+        data: [],
+        borderColor: '#0066ff',
+        backgroundColor: 'rgba(0,102,255,0.06)',
+        pointBackgroundColor: [],
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 7,
+        pointHoverRadius: 10,
+        fill: true,
+        tension: 0.4,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          borderColor: '#e2e6ed',
+          borderWidth: 1,
+          titleColor: '#0066ff',
+          bodyColor: '#3d4a5c',
+          titleFont: { family: 'IBM Plex Mono', size: 12, weight: '500' },
+          bodyFont: { family: 'IBM Plex Mono', size: 11 },
+          padding: 12,
+          callbacks: {
+            label: function(ctx) { return " Result: " + (ctx.parsed.y === 1 ? "Normal" : "Abnormal"); }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(226,230,237,0.8)' },
+          ticks: {
+            color: '#8a94a6',
+            font: { family: 'IBM Plex Mono', size: 10 },
+            maxRotation: 30,
+          }
+        },
+        y: {
+          grid: { color: 'rgba(226,230,237,0.8)' },
+          ticks: {
+            color: '#8a94a6',
+            font: { family: 'IBM Plex Mono', size: 10 },
+            callback: function(v) { return v === 1 ? 'Normal' : v === 0 ? 'Abnormal' : ''; },
+            stepSize: 1
+          },
+          min: -0.2,
+          max: 1.2,
+          title: {
+            display: true,
+            text: 'Result',
+            color: '#8a94a6',
+            font: { family: 'IBM Plex Mono', size: 10 }
+          }
+        }
+      }
+    }
+  });
+
+  // ── Clinistix Color Classification ──
+
+  // Albumin reference colors (RGB)
+  const ALBUMIN_REFS = [
+    { level: 'N',  r: 205, g: 211, b: 148 },
+    { level: '1+', r: 168, g: 191, b: 148 },
+    { level: '2+', r: 146, g: 185, b: 154 },
+    { level: '3+', r: 107, g: 164, b: 153 }
+  ];
+
+  // Creatinine reference colors (RGB)
+  const CREATININE_REFS = [
+    { level: '1+', r: 191, g: 190, b: 80  },
+    { level: '2+', r: 176, g: 194, b: 102 },
+    { level: '3+', r: 108, g: 134, b: 60  }
+  ];
+
+  // Find closest color match using Euclidean distance in RGB space
+  function classifyColor(r, g, b, refs) {
+    var best = refs[0];
+    var bestDist = Infinity;
+    refs.forEach(function(ref) {
+      var dist = Math.sqrt(
+        Math.pow(r - ref.r, 2) +
+        Math.pow(g - ref.g, 2) +
+        Math.pow(b - ref.b, 2)
+      );
+      if (dist < bestDist) { bestDist = dist; best = ref; }
+    });
+    return best.level;
+  }
+
+  // Clinistix lookup table
+  function getResult(albuminLevel, creatinineLevel) {
+    if (albuminLevel === 'N') return 'Normal';
+    if (albuminLevel === '1+' && creatinineLevel === '3+') return 'Normal';
+    return 'Abnormal';
+  }
+
+  function getRiskLevel(result) {
+    if (result === 'Normal') return { label: 'Normal', cls: 'normal' };
+    return { label: 'Abnormal', cls: 'high' };
+  }
+
+  function getPointColor(result) {
+    if (result === 'Normal') return '#00875a';
+    return '#cc2244';
+  }
+
+  // Classify a reading and return full result
+  function classifyReading(pad1R, pad1G, pad1B, pad2R, pad2G, pad2B) {
+    var albuminLevel = classifyColor(pad1R, pad1G, pad1B, ALBUMIN_REFS);
+    var creatinineLevel = classifyColor(pad2R, pad2G, pad2B, CREATININE_REFS);
+    var result = getResult(albuminLevel, creatinineLevel);
+    return { albuminLevel: albuminLevel, creatinineLevel: creatinineLevel, result: result };
+  }
+
+  // Keep estimateUACR for backwards compat with stored readings
+  function estimateUACR(pad1R, pad2R) {
+    if (pad2R === 0) return 0;
+    return parseFloat((pad1R / pad2R * 30).toFixed(2));
+  }
+
+  function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(function(v) { return v.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  function formatDate(iso) {
+    var d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+           ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // ── Render ──
+  function render() {
+    if (readings.length > 0) {
+      var last = readings[readings.length - 1];
+      var classified = classifyReading(last.pad1R, last.pad1G, last.pad1B, last.pad2R, last.pad2G, last.pad2B);
+      var risk = getRiskLevel(classified.result);
+
+      document.getElementById('latestUACR').textContent = classified.result;
+      document.getElementById('latestAlbumin').textContent = classified.albuminLevel;
+      document.getElementById('latestCreatinine').textContent = classified.creatinineLevel;
+
+      // Update gauge
+      var gaugeCard = document.getElementById('gaugeCard');
+      var gaugeCircle = document.getElementById('gaugeCircle');
+      var gaugeValue = document.getElementById('gaugeValue');
+      var gaugeStatus = document.getElementById('gaugeStatus');
+      var gaugeDateEl = document.getElementById('gaugeDate');
+      gaugeCard.style.display = 'flex';
+      gaugeValue.textContent = classified.result;
+      gaugeValue.style.fontSize = '22px';
+      gaugeCircle.className = 'gauge-circle ' + risk.cls;
+      gaugeStatus.className = 'gauge-status ' + risk.cls;
+      gaugeStatus.textContent = 'Albumin: ' + classified.albuminLevel + ' · Creatinine: ' + classified.creatinineLevel;
+      if (gaugeDateEl) gaugeDateEl.textContent = formatDate(last.timestamp);
+    }
+    document.getElementById('totalReadings').textContent = readings.length;
+
+    // Chart — plot 1=Normal, 0=Abnormal
+    chart.data.labels = readings.map(function(r) { return formatDate(r.timestamp); });
+    chart.data.datasets[0].data = readings.map(function(r) {
+      var c = classifyReading(r.pad1R, r.pad1G, r.pad1B, r.pad2R, r.pad2G, r.pad2B);
+      return c.result === 'Normal' ? 1 : 0;
+    });
+    chart.data.datasets[0].pointBackgroundColor = readings.map(function(r) {
+      var c = classifyReading(r.pad1R, r.pad1G, r.pad1B, r.pad2R, r.pad2G, r.pad2B);
+      return getPointColor(c.result);
+    });
+    chart.update();
+
+    // Table
+    var tbody = document.getElementById('readingsBody');
+    if (readings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted); text-align:center; padding:32px 0; font-size:11px; letter-spacing:1px;">No readings yet. Add your first reading above.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = [...readings].reverse().map(function(r, i) {
+      var c = classifyReading(r.pad1R, r.pad1G, r.pad1B, r.pad2R, r.pad2G, r.pad2B);
+      var risk = getRiskLevel(c.result);
+      var hex1 = rgbToHex(r.pad1R, r.pad1G, r.pad1B);
+      var hex2 = rgbToHex(r.pad2R, r.pad2G, r.pad2B);
+      return '<tr>' +
+        '<td>' + formatDate(r.timestamp) + '</td>' +
+        '<td><span class="swatch" style="background:' + hex1 + '"></span>R=' + r.pad1R + ' G=' + r.pad1G + ' B=' + r.pad1B + ' (' + c.albuminLevel + ')</td>' +
+        '<td><span class="swatch" style="background:' + hex2 + '"></span>R=' + r.pad2R + ' G=' + r.pad2G + ' B=' + r.pad2B + ' (' + c.creatinineLevel + ')</td>' +
+        '<td><span class="badge ' + risk.cls + '">' + c.result + '</span></td>' +
+        '<td><button class="delete-row-btn" onclick="deleteReading(' + i + ')">Delete</button></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  // ── Modal ──
+  function openModal() {
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('show');
+    ['pad1R','pad1G','pad1B','pad2R','pad2G','pad2B'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+  }
+
+  async function addReading() {
+    const pad1R = parseInt(document.getElementById('pad1R').value) || 0;
+    const pad1G = parseInt(document.getElementById('pad1G').value) || 0;
+    const pad1B = parseInt(document.getElementById('pad1B').value) || 0;
+    const pad2R = parseInt(document.getElementById('pad2R').value) || 0;
+    const pad2G = parseInt(document.getElementById('pad2G').value) || 0;
+    const pad2B = parseInt(document.getElementById('pad2B').value) || 0;
+
+    if (pad1R === 0 && pad2R === 0) {
+      alert('Please enter at least the R values for both pads.');
+      return;
+    }
+
+    try {
+      const res = await fetch(API + "/readings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pad1R, pad1G, pad1B, pad2R, pad2G, pad2B })
+      });
+      if (!res.ok) throw new Error("Post failed");
+      closeModal();
+      await fetchReadings(); // Refresh from server
+    } catch (err) {
+      alert("Could not save reading — make sure the Pi server is running and you are on the same network.");
+    }
+  }
+
+  async function clearAllReadings() {
+    if (!confirm("Delete all readings? This cannot be undone.")) return;
+    try {
+      const res = await fetch(API + "/readings", { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      await fetchReadings();
+    } catch (err) {
+      alert("Could not clear readings — make sure the Pi server is running.");
+    }
+  }
+
+  async function deleteReading(index) {
+    try {
+      // Index in table is reversed (newest first), so convert back to actual index
+      const actualIndex = readings.length - 1 - index;
+      const res = await fetch(API + "/readings/" + actualIndex, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      await fetchReadings();
+    } catch (err) {
+      alert("Could not delete reading — make sure the Pi server is running.");
+    }
+  }
+
+  function logout() {
+    window.location.href = 'index.html';
+  }
+
+  // ── Init ──
+  fetchReadings();
+  setInterval(fetchReadings, 10000);
+</script>
+<script>
+  function toggleMenu() {
+    var menu = document.getElementById('tabMenu');
+    menu.classList.toggle('open');
+  }
+  document.addEventListener('click', function(e) {
+    var dropdown = document.getElementById('tabDropdown');
+    if (!dropdown.contains(e.target)) {
+      document.getElementById('tabMenu').classList.remove('open');
+    }
+  });
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+</body>
+</html>

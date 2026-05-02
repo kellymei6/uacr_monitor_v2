@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0066ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="uACR">
+  <link rel="apple-touch-icon" href="logo.png">
+  <title>uACR Monitor — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f7f8fa; --surface: #ffffff; --border: #e2e6ed;
+      --accent: #0066ff; --text: #0f1923; --muted: #8a94a6; --error: #cc2244;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      min-height: 100vh; display: flex; align-items: center;
+      justify-content: center; position: relative; overflow: hidden;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,102,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,102,255,0.04) 1px, transparent 1px);
+      background-size: 32px 32px; pointer-events: none;
+    }
+    body::after {
+      content: ''; position: fixed;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(0,102,255,0.06) 0%, transparent 70%);
+      top: -150px; left: -150px; pointer-events: none;
+    }
+    .login-wrapper {
+      position: relative; z-index: 10;
+      width: 100%; max-width: 400px; padding: 20px;
+      animation: fadeUp 0.5s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .brand { text-align: center; margin-bottom: 32px; }
+    .brand-logo { width: 72px; height: auto; margin-bottom: 16px; }
+    .brand-label {
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 4px;
+    }
+    .brand-title { font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+    .brand-sub {
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+      color: var(--muted); margin-top: 5px; letter-spacing: 0.5px;
+    }
+    .status-dot {
+      display: inline-block; width: 5px; height: 5px;
+      background: var(--accent); border-radius: 50%;
+      margin-right: 5px; vertical-align: middle;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block; font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; padding: 12px 14px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+      color: var(--text); outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,102,255,0.08); }
+    .field input::placeholder { color: var(--muted); }
+    .error-msg {
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+      color: var(--error); margin-bottom: 14px; display: none;
+      text-align: center; letter-spacing: 0.5px;
+      background: #fff0f3; border: 1px solid #ffd0da;
+      border-radius: 4px; padding: 8px;
+    }
+    .error-msg.show { display: block; }
+    .btn {
+      width: 100%; padding: 13px; background: var(--accent);
+      border: none; border-radius: 6px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+      font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase;
+      color: #fff; cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+      margin-top: 6px;
+    }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .footer-note {
+      text-align: center; font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; color: var(--muted); margin-top: 20px; letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="brand">
+      <img src="logo.png" alt="uACR Monitor" class="brand-logo"/>
+      <div class="brand-label">Kidney Health Monitor</div>
+      <div class="brand-title">uACR Dashboard</div>
+      <div class="brand-sub"><span class="status-dot"></span>Automated Dipstick Analysis</div>
+    </div>
+    <div class="card">
+      <div class="field">
+        <label>Patient ID</label>
+        <input type="text" id="username" placeholder="Enter patient ID" autocomplete="off"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="off"/>
+      </div>
+      <div class="error-msg" id="error">Invalid credentials. Please try again.</div>
+      <button class="btn" onclick="login()">Access Dashboard</button>
+    </div>
+    <div class="footer-note">BME 4090 — Cornell University</div>
+  </div>
+  <script>
+    const VALID_USER = "razzypi";
+    const VALID_PASS = "Pa55w0rdr4zzy";
+    function login() {
+      const user = document.getElementById("username").value.trim();
+      const pass = document.getElementById("password").value;
+      const error = document.getElementById("error");
+      if (user === VALID_USER && pass === VALID_PASS) {
+        error.classList.remove("show");
+        window.location.href = "dashboard.html";
+      } else {
+        error.classList.add("show");
+        document.getElementById("password").value = "";
+      }
+    }
+    document.addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+  </script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+</body>
+</html>
