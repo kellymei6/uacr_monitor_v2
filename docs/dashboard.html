@@ -863,7 +863,9 @@
   // ── Fetch readings from Pi ──
   async function fetchReadings() {
     try {
-      const res = await fetch(API + "/readings");
+      const res = await fetch(API + "/readings", {
+  headers: { "ngrok-skip-browser-warning": "true" }
+});
       if (!res.ok) throw new Error("Server error");
       readings = await res.json();
       render();
